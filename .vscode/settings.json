@@ -6,6 +6,9 @@
         "config.h": "c",
         "capture.h": "c",
         "udp.h": "c",
-        "parser.h": "c"
+        "parser.h": "c",
+        "tcp.h": "c",
+        "stdlib.h": "c",
+        "parser_log.h": "c"
     }
 }

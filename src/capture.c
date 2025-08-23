@@ -1,6 +1,10 @@
 #include "capture.h"
 #include "parser.h"
 #include <stdlib.h>
+#include "parser_log.h"
+
+/* static prototypes (file-local) */
+static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
 
 /**
  * lisening_to_network
@@ -28,8 +32,7 @@ void lisening_to_network()
      * In a real IDS, this could hold filters, thresholds, etc. */
     Configuration conf[2] = {
         {0, "foo"},
-        {1, "bar"}
-    };
+        {1, "bar"}};
 
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *descr;
@@ -69,13 +72,12 @@ void lisening_to_network()
  *   - Maintain statistics (flows, byte counts, anomaly detection).
  *   - Implement IDS rules (e.g., detect floods, port scans).
  */
-void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *packet)
+static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *packet)
 {
     Configuration *args = (Configuration *)user;
-    ParsedPacket pp = NULL;
-    /* Forward packet for parsing/printing. 
+    ParsedPacket pp;
+    /* Forward packet for parsing/printing.
      * Unused variables are explicitly cast to void in parse_packet. */
-    ParseStatus sp = parse_packet(args, header, packet , &pp);
-
-    
+    parse_packet(args, header, packet, &pp);
+    pp_print_summary(stdout, &pp);
 }

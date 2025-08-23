@@ -3,3 +3,4 @@ ids
 *.o
 *.out
 *.log
+.vscode/

@@ -72,8 +72,10 @@ void lisening_to_network()
 void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *packet)
 {
     Configuration *args = (Configuration *)user;
-
+    ParsedPacket pp = NULL;
     /* Forward packet for parsing/printing. 
      * Unused variables are explicitly cast to void in parse_packet. */
-    parse_packet(args, header, packet);
+    ParseStatus sp = parse_packet(args, header, packet , &pp);
+
+    
 }

@@ -23,99 +23,56 @@
  *   - Safe for truncated captures: returns early if header is too short.
  *   - Relies on constants defined in parser.h to avoid magic numbers.
  */
-void parse_packet(Configuration *args, const struct pcap_pkthdr *header, const u_char *packet)
+void parse_packet(Configuration *args, const struct pcap_pkthdr *header, const u_char *packet, ParsedPacket *pp)
 {
     (void)args; /* not used yet */
 
     /* === Basic capture metadata === */
-    size_t caplen = header->caplen; /* number of bytes actually captured */
-    long sec = header->ts.tv_sec;   /* timestamp: seconds */
-    long usec = header->ts.tv_usec; /* timestamp: microseconds */
-
-    printf("[ts=%ld.%06ld caplen=%zu len=%u]", 
-           sec, usec, caplen, (unsigned)header->len);
+    pp->hdr.cap_len = header->caplen;     /* number of bytes actually captured */
+    pp->hdr.ts_sec = header->ts.tv_sec;   /* timestamp: seconds */
+    pp->hdr.ts_usec = header->ts.tv_usec; /* timestamp: microseconds */
 
     /* === Ethernet layer === */
     /* Must have enough bytes for Ethernet header (14 bytes). */
-    if (caplen < ETH_HDR_LEN) {
+    if (pp->hdr.cap_len < ETH_HDR_LEN)
+    {
+        pp->status = PARSE_TRUNC_ETH;
         puts(" (short Ethernet header)");
         return;
     }
 
-    /* Extract EtherType field (bytes 12–13 of Ethernet header). */
-    unsigned int ethertype = ((unsigned int)packet[ETH_TYPE_OFFSET] << 8) 
-                           | packet[ETH_TYPE_OFFSET + 1];
+    parse_ethernet_l2(packet, pp);
+    
+    //here we need to do parse l3 but we need to do switch on the type !!
 
-    /* For now, only handle IPv4 (0x0800). Print ARP/IPv6 if seen. */
-    if (ethertype != ETH_TYPE_IPv4) {
-        if (ethertype == ETH_TYPE_ARP)
-            puts(" PROTO=ARP");
-        else if (ethertype == ETH_TYPE_IPv6)
-            puts(" PROTO=IPv6");
-        putchar('\n');
-        return;
-    }
+}
 
-    /* === IPv4 layer === */
-    const struct ip *iph = (const struct ip *)(packet + ETH_HDR_LEN);
-    size_t ip_hdr_len = (size_t)iph->ip_hl * IPV4_WORD_LEN; /* ip_hl is in 32-bit words */
+/*
+ * parse_ethernet_l2
+ * -----------------
+ * Parse the Layer 2 (Ethernet) header from a raw packet.
+ *
+ * Parameters:
+ *   packet - pointer to the raw packet bytes (starting at Ethernet header).
+ *   pp     - pointer to ParsedPacket struct where results are stored.
+ *
+ * Behavior:
+ *   - Copies the destination MAC (first 6 bytes) into pp->l2.dst_mac.
+ *   - Copies the source MAC (next 6 bytes) into pp->l2.src_mac.
+ *   - Extracts the EtherType field (bytes 12–13, big-endian) into pp->l2.ethertype.
+ *
+ * Notes:
+ *   - The Ethernet header is assumed to be at least 14 bytes long.
+ *   - EtherType identifies which protocol is encapsulated (IPv4, ARP, IPv6, etc.).
+ */
+void parse_ethernet_l2(const u_char *packet, ParsedPacket *pp)
+{
+    /* Copy destination MAC (first 6 bytes) */
+    memcpy(pp->l2.dst_mac, packet + ETH_DST_OFFSET, MAC_SIZE);
 
-    /* Ensure the full IPv4 header is captured. */
-    if (caplen < ETH_HDR_LEN + ip_hdr_len) {
-        puts(" (short IPv4 header)");
-        return;
-    }
+    /* Copy source MAC (next 6 bytes) */
+    memcpy(pp->l2.src_mac, packet + ETH_SRC_OFFSET, MAC_SIZE);
 
-    /* Convert source/destination IP addresses to strings. */
-    char src[INET_ADDRSTRLEN], dst[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &iph->ip_src, src, sizeof src);
-    inet_ntop(AF_INET, &iph->ip_dst, dst, sizeof dst);
-
-    /* Pointer to the Layer 4 (transport) header. */
-    const u_char *l4 = packet + ETH_HDR_LEN + ip_hdr_len;
-
-    /* Extract protocol field: 1=ICMP, 6=TCP, 17=UDP. */
-    unsigned char proto = iph->ip_p;
-
-    /* === Transport layer switch === */
-    switch (proto) {
-    case IP_PROTO_ICMP:
-        printf(" SRC=%s → DST=%s PROTO=ICMP LEN=%u\n",
-               src, dst, (unsigned)header->len);
-        return;
-
-    case IP_PROTO_TCP: {
-        /* Validate minimum TCP header length. */
-        if (caplen < ETH_HDR_LEN + ip_hdr_len + sizeof(struct tcphdr)) {
-            puts(" (short TCP header)");
-            return;
-        }
-        const struct tcphdr *tcph = (const struct tcphdr *)l4;
-        unsigned sport = ntohs(tcph->source);
-        unsigned dport = ntohs(tcph->dest);
-        printf(" SRC=%s:%u → DST=%s:%u PROTO=TCP LEN=%u\n",
-               src, sport, dst, dport, (unsigned)header->len);
-        return;
-    }
-
-    case IP_PROTO_UDP: {
-        /* Validate minimum UDP header length. */
-        if (caplen < ETH_HDR_LEN + ip_hdr_len + sizeof(struct udphdr)) {
-            puts(" (short UDP header)");
-            return;
-        }
-        const struct udphdr *udph = (const struct udphdr *)l4;
-        unsigned sport = ntohs(udph->source);
-        unsigned dport = ntohs(udph->dest);
-        printf(" SRC=%s:%u → DST=%s:%u PROTO=UDP LEN=%u\n",
-               src, sport, dst, dport, (unsigned)header->len);
-        return;
-    }
-
-    default:
-        /* Unknown or unsupported protocol: print numeric code. */
-        printf(" SRC=%s → DST=%s PROTO=%u LEN=%u\n",
-               src, dst, (unsigned)proto, (unsigned)header->len);
-        return;
-    }
+    /* Extract EtherType (2 bytes, big-endian) */
+    pp->l2.ethertype = ((unsigned int)packet[ETH_TYPE_OFFSET] << 8) | packet[ETH_TYPE_OFFSET + 1];
 }

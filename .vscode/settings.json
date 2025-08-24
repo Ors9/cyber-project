@@ -9,6 +9,8 @@
         "parser.h": "c",
         "tcp.h": "c",
         "stdlib.h": "c",
-        "parser_log.h": "c"
+        "parser_log.h": "c",
+        "stdio.h": "c",
+        "in.h": "c"
     }
 }

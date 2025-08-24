@@ -26,13 +26,19 @@ static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_c
  *       ping 8.8.8.8
  *       curl http://example.com
  */
-void lisening_to_network()
+void lisening_to_network(LogMode logMode)
 {
     /* Example configuration array (placeholder).
-     * In a real IDS, this could hold filters, thresholds, etc. */
-    Configuration conf[2] = {
-        {0, "foo"},
-        {1, "bar"}};
+     * TODO: replace with real IDS configuration:
+     *   - log mode (verbose/events/debug)
+     *   - thresholds for alerts (e.g., SYN flood detection)
+     *   - filters (e.g., ignore local traffic, whitelist hosts)
+     *   - other runtime options
+     *
+     * Right now just holds dummy values "foo" and "bar"
+     * so that got_packet() has a Configuration* to work with.
+     */
+    Configuration conf[1] = {{logMode, 1, "Or Test"}};
 
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *descr;
@@ -76,8 +82,12 @@ static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_c
 {
     Configuration *args = (Configuration *)user;
     ParsedPacket pp;
+    
     /* Forward packet for parsing/printing.
      * Unused variables are explicitly cast to void in parse_packet. */
     parse_packet(args, header, packet, &pp);
-    pp_print_summary(stdout, &pp);
+    
+    /* Choose printing function based on mode */
+    ParsedLinePrinter(stdout , &pp , args->logmode);
+
 }

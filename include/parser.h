@@ -6,6 +6,7 @@
  * ===================================================================== */
 
 /* ===== Includes ===== */
+#include <sys/types.h>
 #include <stdint.h>      /* uint8_t/16/32 */
 #include <pcap/pcap.h>   /* struct pcap_pkthdr */
 #include <netinet/in.h>  /* in_addr, IPPROTO_* */
@@ -13,7 +14,7 @@
 #include <netinet/tcp.h> /* struct tcphdr (for flags bit positions) */
 #include <netinet/udp.h> /* struct udphdr */
 #include <arpa/inet.h>   /* ntohs/ntohl */
-
+#include "parser_log.h"
 #include "capture.h" /* Configuration (capture options) */
 
 /* =====================================================================
@@ -41,7 +42,7 @@ typedef enum EtherType
 } EtherType;
 
 /** Parsed view of Ethernet header (host order). */
-typedef struct
+typedef struct FirstLayerParsed
 {
     uint8_t dst_mac[MAC_SIZE];
     uint8_t src_mac[MAC_SIZE];
@@ -63,7 +64,7 @@ typedef struct
 #define IPV4_FRAG_OFFSET_MASK 0x1FFF /* offset in 8-byte units */
 
 /** L3 protocol tag (for future IPv6/ARP support). */
-typedef enum
+typedef enum L3Protocol
 {
     L3_UNKNOWN = 0,
     L3_IPV4,
@@ -72,7 +73,7 @@ typedef enum
 } L3Protocol;
 
 /** Parsed view of IPv4 header (host order where applicable). */
-typedef struct
+typedef struct SecondLayerParsed
 {
     struct in_addr ip_src; /* use inet_ntop for printing */
     struct in_addr ip_dst; /* use inet_ntop for printing */
@@ -88,7 +89,7 @@ typedef struct
  * ===================================================================== */
 
 /** Parsed view of transport header (host order). */
-typedef struct
+typedef struct ThirdLayerParsed
 {
     /* TCP/UDP */
     uint16_t src_port; /* 0 if not TCP/UDP */
@@ -106,7 +107,7 @@ typedef struct
  * CAPTURE METADATA (libpcap safe copy)
  * ===================================================================== */
 
-typedef struct
+typedef struct CaptureMeta
 {
     uint32_t wire_len; /* Original length on the wire */
     uint32_t cap_len;  /* Captured length (could be < wire_len) */
@@ -118,7 +119,7 @@ typedef struct
  * PARSER STATUS & FLAGS
  * ===================================================================== */
 
-typedef enum
+typedef enum ParseStatus
 {
     PARSE_OK = 0,    /* Parsing succeeded */
     PARSE_NON_IPV4,  /* Non-IPv4 (L3/L4 not decoded) */
@@ -140,7 +141,7 @@ typedef enum
  * AGGREGATED PACKET VIEW
  * ===================================================================== */
 
-typedef struct
+typedef struct ParsedPacket
 {
     CaptureMeta hdr;      /* libpcap metadata (copied) */
     FirstLayerParsed l2;  /* Ethernet */

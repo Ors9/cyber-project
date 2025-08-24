@@ -3,12 +3,22 @@
 
 #include <pcap.h>
 
+
 /* Capture configuration (tune as needed) */
 #define NON_STOP_LOOP -1          /* Run until interrupted (Ctrl+C or pcap_breakloop) */
 #define INTERNET_INTERFACE "eth0" /* Network interface to listen on */
 #define SNAP_LEN 65535            /* Max bytes per packet to capture (entire frame) */
 #define PROMISC 1                 /* 1 = promiscuous mode, 0 = non-promiscuous */
 #define TIMEOUT_MS 1000           /* Read timeout for pcap in milliseconds */
+
+/* Output modes for packet logging */
+typedef enum LogMode
+{
+    LOGMODE_SUMMARY = 0, /* תקציר רגיל של כל חבילה (ברירת מחדל) */
+    LOGMODE_EVENTS  = 1, /* להציג רק אירועים חשובים (פחות רעש) */
+    LOGMODE_DEBUG   = 2  /* פירוט מלא לצורכי ניפוי שגיאות */
+} LogMode;
+
 
 /**
  * Configuration - carries user-defined state into the packet callback.
@@ -22,9 +32,9 @@
  */
 typedef struct
 {
+    LogMode logmode;
     int id;
     char title[255];
 } Configuration;
-
 
 #endif /* CONFIG_H */

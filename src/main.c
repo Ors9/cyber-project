@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "string.h"
-#include "config.h"
 #include "capture.h"
 #include "parser_log.h"
 

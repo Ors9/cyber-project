@@ -1,9 +1,7 @@
 #include "parser_log.h"
-#include <string.h>
 #include "parser.h"
-#include <arpa/inet.h>   /* inet_ntop */
-#include <netinet/in.h>  /* IPPROTO_* */
-#include <netinet/tcp.h> /* TH_SYN, TH_ACK, ... */
+#include <string.h>
+
 
 /* ---- internal prototypes (static) ---- */
 static const char *status_name(ParseStatus s);

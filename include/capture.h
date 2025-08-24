@@ -1,9 +1,13 @@
 #ifndef CAPTURE_H
 #define CAPTURE_H
+
 #include <pcap.h>
 #include "config.h"
-#include "parser_log.h"
 
+/* forward declaration של enum LogMode */
+enum LogMode;
+
+/* capture API */
 void lisening_to_network(LogMode logMode);
 
-#endif
+#endif /* CAPTURE_H */

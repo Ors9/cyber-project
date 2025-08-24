@@ -6,6 +6,8 @@
  * ===================================================================== */
 
 /* ===== Includes ===== */
+#include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <stdint.h>      /* uint8_t/16/32 */
 #include <pcap/pcap.h>   /* struct pcap_pkthdr */
@@ -14,8 +16,7 @@
 #include <netinet/tcp.h> /* struct tcphdr (for flags bit positions) */
 #include <netinet/udp.h> /* struct udphdr */
 #include <arpa/inet.h>   /* ntohs/ntohl */
-#include "parser_log.h"
-#include "capture.h" /* Configuration (capture options) */
+#include "config.h"      /* Configuration (capture options) */
 
 /* =====================================================================
  * LAYER 2 — Ethernet

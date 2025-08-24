@@ -1,6 +1,5 @@
 #include "parser.h"
-#include <stdio.h>
-#include <string.h>
+
 
 /* static prototypes (file-local) */
 static void parse_ethernet_l2(const u_char *packet, ParsedPacket *pp);

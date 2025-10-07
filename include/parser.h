@@ -152,6 +152,7 @@ typedef struct ParsedPacket
     L3Protocol l3_proto; /* Actual parsed L3 protocol */
     ParseStatus status;  /* Outcome */
     uint32_t flags;      /* PFLAG_* bitmask */
+    FILE * file;
 } ParsedPacket;
 
 /* =====================================================================

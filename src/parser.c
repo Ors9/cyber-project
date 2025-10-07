@@ -27,15 +27,15 @@ static void parse_l4_transport(const u_char *packet, size_t caplen, size_t l4_of
  *   - Safe for truncated captures: returns early if header is too short.
  *   - Relies on constants defined in parser.h to avoid magic numbers.
  */
-void parse_packet(Configuration *args, const struct pcap_pkthdr *header, const u_char *packet, ParsedPacket *pp)
+void parse_packet(Configuration *args, const struct pcap_pkthdr *header, const u_char *packet, ParsedPacket *pp )
 {
-    (void)args; /* not used yet */
-
+    
+    (void)args;
     /* init */
     memset(pp, 0, sizeof(*pp));
     pp->status = PARSE_OK;
     pp->l3_proto = L3_UNKNOWN;
-
+    pp->file = stdout;
     /* === Basic capture metadata === */
     pp->hdr.wire_len = header->len;
     pp->hdr.cap_len = header->caplen;     /* number of bytes actually captured */

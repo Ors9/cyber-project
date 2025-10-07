@@ -38,7 +38,7 @@ void lisening_to_network(LogMode logMode)
      * Right now just holds dummy values "foo" and "bar"
      * so that got_packet() has a Configuration* to work with.
      */
-    Configuration conf[1] = {{logMode, 1, "Or Test"}};
+    Configuration conf[1] = {{logMode, 1, stdout, "Or Test"}};
 
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *descr;
@@ -52,9 +52,27 @@ void lisening_to_network(LogMode logMode)
         exit(1);
     }
 
+    FILE *file = stdout;
+    if (logMode == LOGMODE_CSV)
+    {
+        file = fopen("packets.csv", "w");
+        if (file == NULL)
+        {
+            printf("Error in open packet.csv file\n");
+            exit(1);
+        }
+        fprintf(file, "timestamp,src_ip,dst_ip,proto,sport,dport,flags,status\n");
+        conf[0].file = file;
+    }
+
     /* Capture packets indefinitely.
      * NON_STOP_LOOP (-1) tells pcap_loop to never stop unless explicitly broken. */
     pcap_loop(descr, NON_STOP_LOOP, got_packet, (u_char *)conf);
+
+    if (logMode == LOGMODE_CSV)
+    {
+        fclose(file);
+    }
 }
 
 /**
@@ -82,12 +100,12 @@ static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_c
 {
     Configuration *args = (Configuration *)user;
     ParsedPacket pp;
-    
+
     /* Forward packet for parsing/printing.
      * Unused variables are explicitly cast to void in parse_packet. */
     parse_packet(args, header, packet, &pp);
-    
-    /* Choose printing function based on mode */
-    ParsedLinePrinter(stdout , &pp , args->logmode);
+    pp.file = (args && args->file) ? args->file : stdout;
 
+    /* Choose printing function based on mode */
+    ParsedLinePrinter(&pp, args->logmode);
 }

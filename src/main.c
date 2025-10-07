@@ -16,6 +16,8 @@
  *
  *   sudo ./ids -D
  *       → DEBUG mode: very detailed dump of all layers (developer debugging).
+ *   sudo ./ids -C
+ *       → CVS mode: print to CVS all the details.
  */
 int main(int argc, char **argv)
 {
@@ -27,13 +29,19 @@ int main(int argc, char **argv)
         {
             logMode = LOGMODE_EVENTS;
             log_msg(LOG_INFO, "EVENTS mode enabled");
+
         }
         else if (strcmp(argv[i], "-D") == 0)
         {
             logMode = LOGMODE_DEBUG;
             log_msg(LOG_INFO, "DEBUG mode enabled");
         }
-        else
+        else if (strcmp(argv[i], "-C") == 0)
+        {
+            logMode = LOGMODE_CSV;
+            log_msg(LOG_INFO, "CVS mode enabled");
+        }
+        else 
         {
             logMode = LOGMODE_SUMMARY;
             log_msg(LOG_INFO, "SUMMARY mode enabled");
@@ -41,6 +49,7 @@ int main(int argc, char **argv)
     }
 
     /* start listening to network traffic (capture loop) */
+
     lisening_to_network(logMode);
     return 0;
 }

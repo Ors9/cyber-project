@@ -21,9 +21,11 @@ typedef enum
 /* Print a message with given severity (INFO/WARN/ERROR). */
 void log_msg(LogLevel level, const char *msg);
 
-void ParsedLinePrinter(FILE *out, const struct ParsedPacket *pp, LogMode logMode);
+void ParsedLinePrinter(const struct ParsedPacket *pp, LogMode logMode);
 
 /* Convert TCP flags to string (e.g., "SYN|ACK") into the provided buffer. */
 const char *pp_tcp_flags_to_str(unsigned char flags, char *buf, size_t buflen);
+
+
 
 #endif /* PARSER_LOG_H */

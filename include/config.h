@@ -16,7 +16,8 @@ typedef enum LogMode
 {
     LOGMODE_SUMMARY = 0, /* תקציר רגיל של כל חבילה (ברירת מחדל) */
     LOGMODE_EVENTS  = 1, /* להציג רק אירועים חשובים (פחות רעש) */
-    LOGMODE_DEBUG   = 2  /* פירוט מלא לצורכי ניפוי שגיאות */
+    LOGMODE_DEBUG   = 2,  /* פירוט מלא לצורכי ניפוי שגיאות */
+    LOGMODE_CSV = 3
 } LogMode;
 
 
@@ -34,6 +35,7 @@ typedef struct
 {
     LogMode logmode;
     int id;
+    FILE * file;
     char title[255];
 } Configuration;
 

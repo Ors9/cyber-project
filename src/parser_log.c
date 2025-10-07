@@ -2,13 +2,13 @@
 #include "parser.h"
 #include <string.h>
 
-
 /* ---- internal prototypes (static) ---- */
 static const char *status_name(ParseStatus s);
 static int tcp_event_should_print(unsigned char f, LogMode mode);
 static void tcp_print_event(FILE *out, const char *src_ip, unsigned sport, const char *dst_ip, unsigned dport, unsigned char f);
-static void pp_print_summary(FILE *out, const ParsedPacket *pp, LogMode mode);
-static void pp_print_verbose(FILE *out, const ParsedPacket *pp);
+static void pp_print_summary(const ParsedPacket *pp, LogMode mode);
+static void pp_print_verbose(const ParsedPacket *pp);
+static void pp_print_csv(const ParsedPacket *pp);
 
 /* Print a message with a severity prefix (INFO, WARN, ERROR). */
 void log_msg(LogLevel level, const char *msg)
@@ -140,34 +140,65 @@ static void tcp_print_event(FILE *out, const char *src_ip, unsigned sport,
 }
 
 /*Send to the right print function based on the log mode*/
-void ParsedLinePrinter(FILE *out, const struct ParsedPacket *pp, LogMode logMode)
+void ParsedLinePrinter(const struct ParsedPacket *pp, LogMode logMode)
 {
+
     switch (logMode)
     {
     case LOGMODE_SUMMARY:
-        pp_print_summary(out, pp, LOGMODE_SUMMARY); /* מצב תקציר רגיל */
+        pp_print_summary(pp, LOGMODE_SUMMARY); /* מצב תקציר רגיל */
         break;
 
     case LOGMODE_EVENTS:
-        pp_print_summary(out, pp, LOGMODE_EVENTS); /* מצב אירועים בלבד */
+        pp_print_summary(pp, LOGMODE_EVENTS); /* מצב אירועים בלבד */
         break;
 
     case LOGMODE_DEBUG:
-        pp_print_verbose(out, pp); /* מצב דיבוג מפורט */
+        pp_print_verbose(pp); /* מצב דיבוג מפורט */
+        break;
+    case LOGMODE_CSV:
+        pp_print_csv(pp);
         break;
     default:
         break;
     }
 }
 
+static void pp_print_csv(const ParsedPacket *pp)
+{
+    FILE *out = pp->file;
+
+    char src_ip[INET6_ADDRSTRLEN] = {0};
+    char dst_ip[INET6_ADDRSTRLEN] = {0};
+    if (pp->l3_proto == L3_IPV4)
+    {
+        inet_ntop(AF_INET, &pp->l3.ip_src, src_ip, sizeof(src_ip));
+        inet_ntop(AF_INET, &pp->l3.ip_dst, dst_ip, sizeof(dst_ip));
+    }
+
+    // Example columns
+    // timestamp,src_ip,dst_ip,proto,sport,dport,flags,status
+    fprintf(out, "%ld.%06ld,%s,%s,%u,%u,%u,%u,%s\n",
+            pp->hdr.ts_sec, pp->hdr.ts_usec,
+            src_ip, dst_ip,
+            (unsigned)pp->l3.proto,
+            (unsigned)pp->l4.src_port,
+            (unsigned)pp->l4.dst_port,
+            (unsigned)pp->l4.tcp_flags,
+            status_name(pp->status));
+            
+
+    fflush(out);
+}
+
 /* ========================================================================== */
 
 /* Print a short summary line for each packet (depends on mode). */
-static void pp_print_summary(FILE *out, const struct ParsedPacket *pp, LogMode mode)
+static void pp_print_summary(const struct ParsedPacket *pp, LogMode mode)
 {
-    if (!out || !pp)
-        return;
-
+    FILE *out = (pp && pp->file) ? pp->file : stdout;
+  
+   
     char src_ip[INET6_ADDRSTRLEN] = {0};
     char dst_ip[INET6_ADDRSTRLEN] = {0};
 
@@ -269,11 +300,9 @@ static void pp_print_summary(FILE *out, const struct ParsedPacket *pp, LogMode m
 }
 
 /* Print a very detailed dump of the packet (for debugging). */
-static void pp_print_verbose(FILE *out, const struct ParsedPacket *pp)
+static void pp_print_verbose(const struct ParsedPacket *pp)
 {
-    if (!out || !pp)
-        return;
-
+    FILE *out = (pp && pp->file) ? pp->file : stdout;
     fprintf(out, "=== Packet ===\n");
     fprintf(out, "meta: wire=%u cap=%u ts=%ld.%06ld status=%s flags=0x%X\n",
             (unsigned)pp->hdr.wire_len, (unsigned)pp->hdr.cap_len,

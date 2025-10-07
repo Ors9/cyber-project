@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99 -D_DEFAULT_SOURCE -Iinclude
-TARGET = ids
+TARGET = cyber
 
 # add the parser source here:
 SRCS = src/main.c src/capture.c src/parser.c src/parser_log.c

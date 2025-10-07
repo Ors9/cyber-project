@@ -5,18 +5,18 @@
 #include "parser_log.h"
 
 /**
- * ids - program entry point (main).
+ * cyber - program entry point (main).
  *
  * Usage:
- *   sudo ./ids
+ *   sudo ./cyber
  *       → Default (SUMMARY mode): print standard summaries for all packets.
  *
- *   sudo ./ids -E
+ *   sudo ./cyber -E
  *       → EVENTS mode: print only major events (TCP SYN/FIN/RST, ICMP echo).
  *
- *   sudo ./ids -D
+ *   sudo ./cyber -D
  *       → DEBUG mode: very detailed dump of all layers (developer debugging).
- *   sudo ./ids -C
+ *   sudo ./cyber -C
  *       → CVS mode: print to CVS all the details.
  */
 int main(int argc, char **argv)

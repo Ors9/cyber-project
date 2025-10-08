@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -pedantic -std=c99 -D_DEFAULT_SOURCE -Iinclude
 TARGET = cyber
 
 # add the parser source here:
-SRCS = src/main.c src/capture.c src/parser.c src/parser_log.c
+SRCS = src/main.c src/capture.c src/parser.c src/parser_log.c src/rules_stateless.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)

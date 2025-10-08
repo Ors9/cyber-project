@@ -2,6 +2,7 @@
 #include "parser.h"
 #include <stdlib.h>
 #include "parser_log.h"
+#include "rules_stateless.h"
 
 /* static prototypes (file-local) */
 static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
@@ -38,7 +39,7 @@ void lisening_to_network(LogMode logMode)
      * Right now just holds dummy values "foo" and "bar"
      * so that got_packet() has a Configuration* to work with.
      */
-    Configuration conf[1] = {{logMode, 1, stdout, "Or Test"}};
+    Configuration conf[1] = {{logMode, 1, stdout, stdout, "Or Test"}};
 
     char errbuf[PCAP_ERRBUF_SIZE];
     pcap_t *descr;
@@ -62,8 +63,19 @@ void lisening_to_network(LogMode logMode)
             exit(1);
         }
         fprintf(file, "timestamp,src_ip,dst_ip,proto,sport,dport,flags,status\n");
+        fflush(file);
         conf[0].file = file;
     }
+
+    FILE *file_alert = fopen("packets_with_alert.csv", "w");
+    if (file_alert == NULL)
+    {
+        printf("Error in open packet.csv file\n");
+        exit(1);
+    }
+    conf[0].alerts_file = file_alert;
+    fprintf(file_alert, "timestamp,src_ip,dst_ip,proto,sport,dport,rule\n");
+    fflush(file_alert);
 
     /* Capture packets indefinitely.
      * NON_STOP_LOOP (-1) tells pcap_loop to never stop unless explicitly broken. */
@@ -73,6 +85,7 @@ void lisening_to_network(LogMode logMode)
     {
         fclose(file);
     }
+    fclose(file_alert);
 }
 
 /**
@@ -105,6 +118,8 @@ static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_c
      * Unused variables are explicitly cast to void in parse_packet. */
     parse_packet(args, header, packet, &pp);
     pp.file = (args && args->file) ? args->file : stdout;
+
+    eval_stateless_rules(&pp, args);
 
     /* Choose printing function based on mode */
     ParsedLinePrinter(&pp, args->logmode);

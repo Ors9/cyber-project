@@ -36,6 +36,7 @@ typedef struct
     LogMode logmode;
     int id;
     FILE * file;
+    FILE *alerts_file;
     char title[255];
 } Configuration;
 

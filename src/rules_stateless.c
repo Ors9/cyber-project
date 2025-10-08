@@ -35,15 +35,16 @@ void eval_stateless_rules(const ParsedPacket *pp, const Configuration *cfg)
 
     uint8_t f = pp->l4.tcp_flags;
 
-    /* חוק 1: TCP NULL — כל הדגלים כבויים */
-    if (f == 0)
-        print_alert(pp, cfg, "TCP_NULL", "INFO");
-
-    /* חוק 2: TCP Xmas — שלושה דגלים דלוקים */
     if ((f & (TH_FIN | TH_PUSH | TH_URG)) == (TH_FIN | TH_PUSH | TH_URG))
+    {
         print_alert(pp, cfg, "TCP_XMAS", "WARN");
-
-    /* חוק 3: TCP FIN — רק FIN דולק, בלי SYN/ACK */
-    if ((f & TH_FIN) && !(f & (TH_SYN | TH_ACK)))
+    }
+    else if ((f & TH_FIN) && !(f & (TH_SYN | TH_ACK)))
+    {
         print_alert(pp, cfg, "TCP_FIN", "WARN");
+    }
+    else if (f == 0)
+    {
+        print_alert(pp, cfg, "TCP_NULL", "INFO");
+    }
 }

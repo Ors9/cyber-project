@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "parser_log.h"
 #include "rules_stateless.h"
+#include "rules_stateful.h"
 
 /* static prototypes (file-local) */
 static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_char *packet);
@@ -77,6 +78,9 @@ void lisening_to_network(LogMode logMode)
     fprintf(file_alert, "timestamp,src_ip,dst_ip,proto,sport,dport,rule\n");
     fflush(file_alert);
 
+    /* NEW: init stateful rules once before capture loop */
+    stateful_init();
+
     /* Capture packets indefinitely.
      * NON_STOP_LOOP (-1) tells pcap_loop to never stop unless explicitly broken. */
     pcap_loop(descr, NON_STOP_LOOP, got_packet, (u_char *)conf);
@@ -113,6 +117,7 @@ static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_c
 {
     Configuration *args = (Configuration *)user;
     ParsedPacket pp;
+    static unsigned long pkt_counter = 0;
 
     /* Forward packet for parsing/printing.
      * Unused variables are explicitly cast to void in parse_packet. */
@@ -120,6 +125,13 @@ static void got_packet(u_char *user, const struct pcap_pkthdr *header, const u_c
     pp.file = (args && args->file) ? args->file : stdout;
 
     eval_stateless_rules(&pp, args);
+    stateful_on_packet(&pp, args);
+
+    /* every 1000 packets do a quick cleanup */
+    if ((++pkt_counter % 1000) == 0)
+    {
+        stateful_housekeeping(pp.hdr.ts_sec);
+    }
 
     /* Choose printing function based on mode */
     ParsedLinePrinter(&pp, args->logmode);

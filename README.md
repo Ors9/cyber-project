@@ -17,15 +17,16 @@ Capture live traffic with `libpcap`, parse Ethernet/IPv4/TCP/UDP/ICMP, apply sim
 ---
 
 ## Usement Examples:
-TCP_FIN example:
+**TCP FIN (stateless WARN)**  
 <img width="865" height="507" alt="image" src="https://github.com/user-attachments/assets/0d53d64e-3153-4da8-be63-dd1a3a4d5f63" />
-Xmax Packet:
+**TCP XMAS (stateless WARN)**  
 <img width="865" height="507" alt="image" src="https://github.com/user-attachments/assets/b27ae845-8c02-4c37-b821-745936e4f706" />
-Null Packet:
+**NULL packet (stateless INFO)**  
 <img width="865" height="511" alt="image" src="https://github.com/user-attachments/assets/70ff978b-096b-447b-a8d8-d38fe6409970" />
-Port Scan Suspect:
+**Port-scan detected (stateful ALERT)**
 <img width="1393" height="831" alt="image" src="https://github.com/user-attachments/assets/4d99a1d7-47a9-493a-9aaf-c1aff586f708" />
 
-Regular Packets without any suspicios:
+**All traffic (packets.csv) — example of non-suspicious rows**  
 <img width="2839" height="1693" alt="image" src="https://github.com/user-attachments/assets/a0e1b594-6711-4340-980c-684473b59ed9" />
+---
 
